@@ -1,0 +1,36 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      MODEL_PATH: /app/models/best_model.pkl
+    networks:
+      - mlops-net
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - mlops-net
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./monitoring/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
+    depends_on:
+      - prometheus
+    networks:
+      - mlops-net
+
+networks:
+  mlops-net:
+    driver: bridge

@@ -1,0 +1,14 @@
+{
+  "model": "logistic_regression",
+  "metrics": {
+    "cv_accuracy": 0.8135638297872341,
+    "cv_precision": 0.7945004159030272,
+    "cv_recall": 0.7961038961038961,
+    "cv_roc_auc": 0.8734319014319014,
+    "test_accuracy": 0.8333333333333334,
+    "test_precision": 0.8461538461538461,
+    "test_recall": 0.7857142857142857,
+    "test_f1": 0.8148148148148148,
+    "test_roc_auc": 0.9497767857142857
+  }
+}

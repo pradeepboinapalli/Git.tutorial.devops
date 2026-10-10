@@ -1,0 +1,72 @@
+name: MLOps CI/CD
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-test-train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Ruff lint
+        run: ruff check src tests scripts
+
+      - name: Download data
+        run: python scripts/download_data.py
+
+      - name: Unit tests
+        run: pytest tests -v --cov=heart_disease --cov-report=term-missing
+
+      - name: Train models (MLflow)
+        run: python scripts/train.py
+
+      - name: Upload MLflow runs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-runs
+          path: mlruns/
+
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model
+          path: |
+            models/best_model.pkl
+            models/best_model_metrics.json
+
+  docker:
+    needs: lint-test-train
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t heart-disease-mlops:ci .
+
+      - name: Smoke test container
+        run: |
+          docker run -d --name heart-api -p 8000:8000 heart-disease-mlops:ci
+          sleep 15
+          curl -sf http://localhost:8000/health
+          curl -sf -X POST http://localhost:8000/predict \
+            -H "Content-Type: application/json" \
+            -d '{"age":55,"sex":1,"cp":2,"trestbps":140,"chol":250,"fbs":0,"restecg":1,"thalach":150,"exang":0,"oldpeak":1.2,"slope":1,"ca":0,"thal":2}'
+          docker logs heart-api
+          docker stop heart-api
