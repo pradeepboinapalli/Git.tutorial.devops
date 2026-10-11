@@ -19,6 +19,7 @@ data/processed/*.csv
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 models/*.pkl
+models/best_model/
 !models/.gitkeep
 .coverage
 htmlcov/

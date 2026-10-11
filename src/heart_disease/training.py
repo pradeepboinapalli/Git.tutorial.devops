@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 
 import joblib
 import mlflow
@@ -115,7 +116,10 @@ def train_and_select(
     )
 
     if register_best:
-        mlflow.sklearn.save_model(best_model, str(ARTIFACTS / "best_model"))
+        dest = ARTIFACTS / "best_model"
+        if dest.exists():
+            shutil.rmtree(dest)
+        mlflow.sklearn.save_model(best_model, str(dest))
         joblib.dump(best_model, ARTIFACTS / "best_model.pkl")
 
     with mlflow.start_run(run_name="best_model_summary"):
